@@ -20,7 +20,7 @@
       "text": "Nice choice. I’ll suggest a learning roadmap and book a mentor slot for you."
     },
 
-    { "type": "webhook_get", "url": "https://YOUR_SERVER_HOST/slotByField?field={{interest_area}}" },
+    { "type": "webhook_get", "url": "https://skillsculptor-z02z.onrender.com/slotByField?field={{interest_area}}" },
 
     {
       "type": "input",
@@ -28,7 +28,7 @@
       "text": "Enter the Slot ID you want to book"
     },
 
-    { "type": "webhook_post", "url": "https://YOUR_SERVER_HOST/saveRecord" },
+    { "type": "webhook_post", "url": "https://skillsculptor-z02z.onrender.com/saveRecord" },
 
     { "type": "message", "text": "You're booked. Your roadmap and mentor details will reach your inbox." }
   ]
