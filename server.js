@@ -6,6 +6,14 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+const path = require("path");
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "operator-widget.html"));
+});
+
 
 
 let visitors = [];
