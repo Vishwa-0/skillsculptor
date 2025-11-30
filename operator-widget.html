@@ -1,0 +1,26 @@
+<div id="widgetPanel">Loading visitor...</div>
+
+<script>
+async function fetchData(id) {
+  const res = await fetch("https://YOUR_SERVER_HOST/visitor/" + id);
+  const data = await res.json();
+
+  document.getElementById("widgetPanel").innerHTML = `
+    <h3>${data.visitor_name}</h3>
+    <p><b>Email:</b> ${data.visitor_email}</p>
+    <p><b>Academic Year:</b> ${data.academic_year}</p>
+    <p><b>Selected Field:</b> ${data.interest_area}</p>
+    <p><b>Booked Mentor Slot:</b> ${data.slot_id}</p>
+
+    <button onclick="push()">Push to CRM</button>
+  `;
+}
+
+async function push(){
+  await fetch("https://YOUR_SERVER_HOST/pushToCRM",{method:"POST"});
+  alert("Lead synced to CRM");
+}
+
+fetchData("v001");
+
+</script>
