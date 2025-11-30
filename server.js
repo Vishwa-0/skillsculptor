@@ -11,8 +11,13 @@ app.use(cors());
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, "public")));
 
-// Serve operator-widget.html at homepage
+// Serve homepage (main website)
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Serve operator widget
+app.get("/operator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "operator-widget.html"));
 });
 
@@ -35,7 +40,7 @@ app.get('/slots', (req, res) => {
   res.json(free);
 });
 
-// NEW ENDPOINT: Get slots by field
+// Get slots by field
 app.get('/slotByField', (req, res) => {
   const field = req.query.field;
   if (!field) {
@@ -49,6 +54,8 @@ app.get('/slotByField', (req, res) => {
 // Save visitor record + book slot if needed
 app.post('/saveRecord', (req, res) => {
   const data = req.body;
+
+  console.log('=== SAVE RECORD CALLED ===', data);
 
   // Generate visitor_id if not provided
   if (!data.visitor_id) {
@@ -66,6 +73,10 @@ app.post('/saveRecord', (req, res) => {
   visitors = visitors.filter(v => v.visitor_id !== data.visitor_id);
   
   visitors.push(data);
+  
+  console.log('Visitor saved:', data);
+  console.log('Total visitors:', visitors.length);
+
   res.json({ 
     status: "ok", 
     saved: true, 
@@ -81,12 +92,12 @@ app.get('/visitor/:id', (req, res) => {
   res.json(visitor);
 });
 
-// Get all visitors (NEW - for operator panel)
+// Get all visitors
 app.get('/visitors', (req, res) => {
   res.json(visitors);
 });
 
-// CRM mock API - enhanced to accept visitor data
+// CRM mock API
 app.post('/pushToCRM', (req, res) => {
   const { visitor_id } = req.body;
   const visitor = visitors.find(v => v.visitor_id === visitor_id);
@@ -95,7 +106,6 @@ app.post('/pushToCRM', (req, res) => {
     return res.status(404).json({ status: "error", msg: "Visitor not found" });
   }
   
-  // Mock CRM integration
   console.log('Pushing to CRM:', visitor);
   res.json({ 
     status: "success", 
@@ -104,7 +114,7 @@ app.post('/pushToCRM', (req, res) => {
   });
 });
 
-// NEW: Reset slots endpoint (for testing)
+// Reset slots endpoint (for testing)
 app.post('/resetSlots', (req, res) => {
   slots.forEach(slot => {
     slot.booked = false;
@@ -112,7 +122,7 @@ app.post('/resetSlots', (req, res) => {
   res.json({ status: "ok", message: "All slots reset to available" });
 });
 
-// NEW: Get slot status
+// Get slot status
 app.get('/slotStatus', (req, res) => {
   const slotStatus = slots.map(slot => ({
     slot_id: slot.slot_id,
@@ -124,6 +134,20 @@ app.get('/slotStatus', (req, res) => {
   res.json(slotStatus);
 });
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    visitors_count: visitors.length,
+    slots_count: slots.length,
+    free_slots: slots.filter(s => !s.booked).length
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port", PORT));
+app.listen(PORT, () => {
+  console.log("SkillSculptor Server running on port", PORT);
+  console.log("Website: http://localhost:" + PORT);
+  console.log("Operator Panel: http://localhost:" + PORT + "/operator");
+});
