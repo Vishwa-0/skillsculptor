@@ -35,12 +35,24 @@ app.get('/slots', (req, res) => {
   res.json(free);
 });
 
+// NEW ENDPOINT: Get slots by field
+app.get('/slotByField', (req, res) => {
+  const field = req.query.field;
+  if (!field) {
+    return res.status(400).json({ status: "error", msg: "Field parameter is required" });
+  }
+  
+  const freeSlots = slots.filter(s => !s.booked && s.field === field);
+  res.json(freeSlots);
+});
+
 // Save visitor record + book slot if needed
 app.post('/saveRecord', (req, res) => {
   const data = req.body;
 
+  // Generate visitor_id if not provided
   if (!data.visitor_id) {
-    return res.status(400).json({ status: "error", msg: "Missing visitor ID" });
+    data.visitor_id = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
   }
 
   if (data.slot_id) {
@@ -50,8 +62,16 @@ app.post('/saveRecord', (req, res) => {
     slot.booked = true;
   }
 
+  // Remove existing visitor if same ID exists
+  visitors = visitors.filter(v => v.visitor_id !== data.visitor_id);
+  
   visitors.push(data);
-  res.json({ status: "ok", saved: true });
+  res.json({ 
+    status: "ok", 
+    saved: true, 
+    visitor_id: data.visitor_id,
+    message: "Record saved successfully" 
+  });
 });
 
 // Fetch single visitor
@@ -61,9 +81,47 @@ app.get('/visitor/:id', (req, res) => {
   res.json(visitor);
 });
 
-// CRM mock API
+// Get all visitors (NEW - for operator panel)
+app.get('/visitors', (req, res) => {
+  res.json(visitors);
+});
+
+// CRM mock API - enhanced to accept visitor data
 app.post('/pushToCRM', (req, res) => {
-  res.json({ status: "pushed_to_crm_mock" });
+  const { visitor_id } = req.body;
+  const visitor = visitors.find(v => v.visitor_id === visitor_id);
+  
+  if (!visitor) {
+    return res.status(404).json({ status: "error", msg: "Visitor not found" });
+  }
+  
+  // Mock CRM integration
+  console.log('Pushing to CRM:', visitor);
+  res.json({ 
+    status: "success", 
+    message: "Lead synced to CRM successfully",
+    visitor_data: visitor
+  });
+});
+
+// NEW: Reset slots endpoint (for testing)
+app.post('/resetSlots', (req, res) => {
+  slots.forEach(slot => {
+    slot.booked = false;
+  });
+  res.json({ status: "ok", message: "All slots reset to available" });
+});
+
+// NEW: Get slot status
+app.get('/slotStatus', (req, res) => {
+  const slotStatus = slots.map(slot => ({
+    slot_id: slot.slot_id,
+    time: slot.time,
+    mentor: slot.mentor,
+    field: slot.field,
+    booked: slot.booked
+  }));
+  res.json(slotStatus);
 });
 
 // Start server
