@@ -50,6 +50,10 @@ app.post('/pushToCRM', (req, res) => {
   res.json({ status: "pushed_to_crm_mock" });
 });
 
+app.get("/", (req, res) => {
+  res.send("SkillSculptor API is running!");
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => console.log("Server running on port", PORT));
