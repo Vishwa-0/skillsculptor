@@ -1,12 +1,29 @@
 {
   "name": "SkillSculptor",
   "blocks": [
-    { "type": "message", "text": "Hey, I help you choose the right learning path and book guided sessions." },
+    { 
+      "type": "message", 
+      "text": "Hey, I help you choose the right learning path and book guided sessions." 
+    },
 
-    { "type": "input", "store": "visitor_name", "text": "Your name?" },
-    { "type": "input", "store": "visitor_email", "text": "Your email?" },
+    { 
+      "type": "input", 
+      "store": "visitor_name", 
+      "text": "What's your name?" 
+    },
+    
+    { 
+      "type": "input", 
+      "store": "visitor_email", 
+      "text": "What's your email address?" 
+    },
 
-    { "type": "choice", "store": "academic_year", "options": ["2nd year", "3rd year", "Final year"] },
+    { 
+      "type": "choice", 
+      "store": "academic_year", 
+      "text": "Which academic year are you in?",
+      "options": ["2nd year", "3rd year", "Final year"] 
+    },
 
     {
       "type": "choice",
@@ -17,19 +34,41 @@
 
     {
       "type": "message",
-      "text": "Nice choice. I’ll suggest a learning roadmap and book a mentor slot for you."
+      "text": "Nice choice! I'll suggest a learning roadmap and book a mentor slot for you."
     },
 
-    { "type": "webhook_get", "url": "https://skillsculptor-z02z.onrender.com/slotByField?field={{interest_area}}" },
+    { 
+      "type": "webhook_get", 
+      "url": "https://skillsculptor-z02z.onrender.com/slotByField?field={{interest_area}}",
+      "store": "available_slots"
+    },
+
+    {
+      "type": "message",
+      "text": "Available slots: {{available_slots}}"
+    },
 
     {
       "type": "input",
       "store": "slot_id",
-      "text": "Enter the Slot ID you want to book"
+      "text": "Enter the Slot ID you want to book from the available slots above"
     },
 
-    { "type": "webhook_post", "url": "https://skillsculptor-z02z.onrender.com/saveRecord" },
+    { 
+      "type": "webhook_post", 
+      "url": "https://skillsculptor-z02z.onrender.com/saveRecord",
+      "body": {
+        "visitor_name": "{{visitor_name}}",
+        "visitor_email": "{{visitor_email}}", 
+        "academic_year": "{{academic_year}}",
+        "interest_area": "{{interest_area}}",
+        "slot_id": "{{slot_id}}"
+      }
+    },
 
-    { "type": "message", "text": "You're booked. Your roadmap and mentor details will reach your inbox." }
+    { 
+      "type": "message", 
+      "text": "Great! You're all booked. Your learning roadmap and mentor details will be sent to your email. Your Visitor ID is: {{webhook_post_result.visitor_id}}" 
+    }
   ]
 }
