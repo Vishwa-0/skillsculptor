@@ -1,27 +1,307 @@
-<div id="widgetPanel">Loading visitor...</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSculptor - Operator Widget</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .widget-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h3 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .info-row b {
+            color: #495057;
+        }
+        .search-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #545b62;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .loading {
+            color: #6c757d;
+            text-align: center;
+            padding: 20px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            flex: 1;
+        }
+        .visitor-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .visitor-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .visitor-item:hover {
+            background: #f8f9fa;
+        }
+        .visitor-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <h3>SkillSculptor Operator Panel</h3>
+        
+        <div class="search-section">
+            <h4>Visitor Lookup</h4>
+            <input type="text" id="visitorIdInput" placeholder="Enter Visitor ID (e.g., visitor_123)" value="">
+            
+            <div class="button-group">
+                <button onclick="searchVisitor()">Load Visitor Data</button>
+                <button onclick="loadAllVisitors()" class="secondary">Show All Visitors</button>
+            </div>
+            
+            <div id="visitorList" class="visitor-list" style="display: none;"></div>
+        </div>
 
-<script>
-async function fetchData(id) {
-  const res = await fetch("https://skillsculptor-z02z.onrender.com/visitor/" + id);
-  const data = await res.json();
+        <div id="widgetPanel" class="loading">Enter a Visitor ID and click "Load Visitor Data"</div>
+        
+        <div class="button-group">
+            <button onclick="checkSlotStatus()">Check Slot Status</button>
+            <button onclick="resetSlots()" class="secondary">Reset All Slots (Testing)</button>
+        </div>
+    </div>
 
-  document.getElementById("widgetPanel").innerHTML = `
-    <h3>${data.visitor_name}</h3>
-    <p><b>Email:</b> ${data.visitor_email}</p>
-    <p><b>Academic Year:</b> ${data.academic_year}</p>
-    <p><b>Selected Field:</b> ${data.interest_area}</p>
-    <p><b>Booked Mentor Slot:</b> ${data.slot_id}</p>
+    <script>
+        async function fetchData(id) {
+            const widgetPanel = document.getElementById("widgetPanel");
+            
+            if (!id || id.trim() === '') {
+                widgetPanel.innerHTML = '<div class="error">Please enter a Visitor ID</div>';
+                return;
+            }
 
-    <button onclick="push()">Push to CRM</button>
-  `;
-}
+            // Show loading state
+            widgetPanel.innerHTML = '<div class="loading">Loading visitor data...</div>';
 
-async function push(){
-  await fetch("https://skillsculptor-z02z.onrender.com/pushToCRM",{method:"POST"});
-  alert("Lead synced to CRM");
-}
+            try {
+                const res = await fetch("https://skillsculptor-z02z.onrender.com/visitor/" + id);
+                
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        throw new Error('Visitor not found');
+                    } else {
+                        throw new Error('Server error: ' + res.status);
+                    }
+                }
 
-fetchData("v001");
+                const data = await res.json();
 
-</script>
+                if (data.status === "not_found") {
+                    widgetPanel.innerHTML = `<div class="error">Visitor "${id}" not found</div>`;
+                    return;
+                }
 
+                // Display visitor data
+                widgetPanel.innerHTML = `
+                    <h3>${data.visitor_name || 'Unknown Visitor'}</h3>
+                    <div class="info-row">
+                        <b>Visitor ID:</b> ${data.visitor_id || 'Not provided'}
+                    </div>
+                    <div class="info-row">
+                        <b>Email:</b> ${data.visitor_email || 'Not provided'}
+                    </div>
+                    <div class="info-row">
+                        <b>Academic Year:</b> ${data.academic_year || 'Not provided'}
+                    </div>
+                    <div class="info-row">
+                        <b>Selected Field:</b> ${data.interest_area || 'Not provided'}
+                    </div>
+                    <div class="info-row">
+                        <b>Booked Mentor Slot:</b> ${data.slot_id || 'No slot booked'}
+                    </div>
+                    <button onclick="pushToCRM('${data.visitor_id}')">Push to CRM</button>
+                `;
+
+            } catch (error) {
+                widgetPanel.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadAllVisitors() {
+            try {
+                const res = await fetch("https://skillsculptor-z02z.onrender.com/visitors");
+                const visitors = await res.json();
+                
+                const visitorList = document.getElementById("visitorList");
+                if (visitors.length === 0) {
+                    visitorList.innerHTML = '<div class="loading">No visitors found</div>';
+                } else {
+                    visitorList.innerHTML = visitors.map(visitor => `
+                        <div class="visitor-item" onclick="document.getElementById('visitorIdInput').value='${visitor.visitor_id}'; searchVisitor();">
+                            <strong>${visitor.visitor_name || 'Unknown'}</strong><br>
+                            ID: ${visitor.visitor_id} | Field: ${visitor.interest_area || 'N/A'}
+                        </div>
+                    `).join('');
+                }
+                visitorList.style.display = 'block';
+            } catch (error) {
+                alert("Error loading visitors: " + error.message);
+            }
+        }
+
+        async function pushToCRM(visitorId) {
+            const button = event.target;
+            const originalText = button.textContent;
+            
+            button.textContent = 'Pushing...';
+            button.disabled = true;
+
+            try {
+                const res = await fetch("https://skillsculptor-z02z.onrender.com/pushToCRM", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ visitor_id: visitorId })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert("✅ " + (result.message || "Lead synced to CRM successfully!"));
+                } else {
+                    throw new Error(result.msg || 'Failed to push to CRM');
+                }
+            } catch (error) {
+                alert("❌ Error pushing to CRM: " + error.message);
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function checkSlotStatus() {
+            try {
+                const res = await fetch("https://skillsculptor-z02z.onrender.com/slotStatus");
+                const slots = await res.json();
+                
+                const slotInfo = slots.map(slot => 
+                    `${slot.slot_id}: ${slot.field} with ${slot.mentor} - ${slot.booked ? '❌ Booked' : '✅ Available'}`
+                ).join('\n');
+                
+                alert("Slot Status:\n\n" + slotInfo);
+            } catch (error) {
+                alert("Error checking slot status: " + error.message);
+            }
+        }
+
+        async function resetSlots() {
+            if (!confirm("Are you sure you want to reset all slots? This will make all slots available for booking.")) {
+                return;
+            }
+            
+            try {
+                const res = await fetch("https://skillsculptor-z02z.onrender.com/resetSlots", {
+                    method: "POST"
+                });
+                const result = await res.json();
+                
+                if (res.ok) {
+                    alert("✅ " + result.message);
+                } else {
+                    throw new Error(result.msg || 'Failed to reset slots');
+                }
+            } catch (error) {
+                alert("❌ Error resetting slots: " + error.message);
+            }
+        }
+
+        function searchVisitor() {
+            const visitorId = document.getElementById("visitorIdInput").value.trim();
+            fetchData(visitorId);
+        }
+
+        // Allow pressing Enter to search
+        document.getElementById("visitorIdInput").addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchVisitor();
+            }
+        });
+
+        // Load on page load
+        window.addEventListener('load', function() {
+            // Optional: Load some default data or leave empty
+        });
+    </script>
+</body>
+</html>
