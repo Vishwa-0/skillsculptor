@@ -1,27 +1,25 @@
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require("path");
+
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
-const path = require("path");
 
+// Serve static files from /public
 app.use(express.static(path.join(__dirname, "public")));
 
+// Serve operator-widget.html at homepage
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "operator-widget.html"));
 });
 
-
-
+// In-memory store
 let visitors = [];
 
-app.get('/slots', (req, res) => {
-  const free = slots.filter(s => !s.booked);
-  res.json(free);
-});
+// All available slots
 let slots = [
   { slot_id: 'c101', time: '2025-12-04T15:00:00+05:30', mentor: 'Cloud Architect', field: 'Cloud', booked: false },
   { slot_id: 'd102', time: '2025-12-05T11:00:00+05:30', mentor: 'DevOps Engineer', field: 'DevOps', booked: false },
@@ -30,6 +28,14 @@ let slots = [
   { slot_id: 'm105', time: '2025-12-06T19:00:00+05:30', mentor: 'ML Engineer', field: 'ML/AI', booked: false },
   { slot_id: 's106', time: '2025-12-07T16:00:00+05:30', mentor: 'Security Analyst', field: 'Cybersecurity', booked: false }
 ];
+
+// Get free slots
+app.get('/slots', (req, res) => {
+  const free = slots.filter(s => !s.booked);
+  res.json(free);
+});
+
+// Save visitor record + book slot if needed
 app.post('/saveRecord', (req, res) => {
   const data = req.body;
 
@@ -48,20 +54,18 @@ app.post('/saveRecord', (req, res) => {
   res.json({ status: "ok", saved: true });
 });
 
+// Fetch single visitor
 app.get('/visitor/:id', (req, res) => {
   const visitor = visitors.find(v => v.visitor_id === req.params.id);
   if (!visitor) return res.status(404).json({ status: "not_found" });
   res.json(visitor);
 });
 
+// CRM mock API
 app.post('/pushToCRM', (req, res) => {
   res.json({ status: "pushed_to_crm_mock" });
 });
 
-app.get("/", (req, res) => {
-  res.send("SkillSculptor API is running!");
-});
-
+// Start server
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => console.log("Server running on port", PORT));
